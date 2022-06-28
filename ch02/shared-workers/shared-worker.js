@@ -11,9 +11,15 @@ self.onconnect = (event) => {
   port.onmessage = (event) => {
     console.log("MESSAGE", ID, event.data);
 
+    if (event.data === "close") {
+      ports.delete(port);
+      console.log("Delete port");
+    }
+
     for (let p of ports) {
       p.postMessage([ID, event.data]);
     }
   };
 };
+
 // chrome://inspect/#workers 에서 허용해야 디버깅 가능
