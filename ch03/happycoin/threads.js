@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { Worker, isMainThread, parentPort } = require("worker_threads");
 
 const big64arr = new BigUint64Array(1);
 
@@ -28,13 +29,32 @@ function isHappyCoin(num) {
   return isHappy(num) && num % 100_000n == 0n;
 }
 
-let count = 0;
-for (let i = 1; i < 10_000_000; i++) {
-  const randomNum = random64();
-  if (isHappyCoin(randomNum)) {
-    process.stdout.write(`${randomNum.toString()} `);
-    count += 1;
-  }
-}
+const THREAD_COUNT = 4;
 
-process.stdout.write(`\n count ${count}\n`);
+if (isMainThread) {
+  let inFlight = THREAD_COUNT;
+  let count = 0;
+
+  for (let i = 0; i < THREAD_COUNT; i++) {
+    const worker = new Worker(__filename);
+
+    worker.on("message", (msg) => {
+      if (msg === "done") {
+        if (--inFlight === 0) {
+          process.stdout.write(`\n count ${count}\n`);
+        }
+      } else if (typeof msg === "bigint") {
+        process.stdout.write(`${randomNum.toString()} `);
+        count++;
+      }
+    });
+  }
+} else {
+  for (let i = 1; i < 10_000_000 / THREAD_COUNT; i++) {
+    const randomNum = random64();
+    if (isHappyCoin(randomNum)) {
+      parentPort.postMessage(randomNum);
+    }
+  }
+  parentPort.postMessage("done");
+}
