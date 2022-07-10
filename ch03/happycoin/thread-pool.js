@@ -1,3 +1,4 @@
+const Piscina = require("piscina");
 const crypto = require("crypto");
 const { Worker, isMainThread, parentPort } = require("worker_threads");
 
@@ -31,30 +32,39 @@ function isHappyCoin(num) {
 
 const THREAD_COUNT = 4;
 
-if (isMainThread) {
-  let inFlight = THREAD_COUNT;
+if (!Piscina.isWorkerThread) {
+  const piscina = new Piscina({
+    filename: __filename,
+    minThreads: THREAD_COUNT,
+    maxThreads: THREAD_COUNT,
+  });
+
+  let done = 0;
   let count = 0;
 
   for (let i = 0; i < THREAD_COUNT; i++) {
-    const worker = new Worker(__filename);
-
-    worker.on("message", (msg) => {
-      if (msg === "done") {
-        if (--inFlight === 0) {
-          process.stdout.write(`\n count ${count}\n`);
-        }
-      } else if (typeof msg === "bigint") {
-        process.stdout.write(`${msg.toString()} `);
-        count++;
+    (async () => {
+      const { total, happycoins } = await piscina.run();
+      process.stdout.write(happycoins);
+      count += total;
+      if (++done === THREAD_COUNT) {
+        console.log("\ncount", count);
       }
-    });
+    })();
   }
-} else {
-  for (let i = 1; i < 10_000_000 / THREAD_COUNT; i++) {
+}
+
+module.exports = () => {
+  let happycoins = "";
+  let total = 0;
+
+  for (let i = 0; i < 10_000_000 / THREAD_COUNT; i++) {
     const randomNum = random64();
     if (isHappyCoin(randomNum)) {
-      parentPort.postMessage(randomNum);
+      happycoins += `${randomNum.toString()} `;
+      total += 1;
     }
   }
-  parentPort.postMessage("done");
-}
+
+  return { total, happycoins };
+};
