@@ -44,7 +44,7 @@ if (isMainThread) {
           process.stdout.write(`\n count ${count}\n`);
         }
       } else if (typeof msg === "bigint") {
-        process.stdout.write(`${randomNum.toString()} `);
+        process.stdout.write(`${msg.toString()} `);
         count++;
       }
     });
