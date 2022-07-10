@@ -1,14 +1,12 @@
 const http = require("http");
-const cluster = require("cluster");
+const { Worker, isMainThread, workerData } = require("worker_threads");
 
-if (cluster.isPrimary) {
-  cluster.fork();
-  cluster.fork();
-  cluster.fork();
-  cluster.fork();
+if (isMainThread) {
+  new Worker(__filename, { workerData: { isWorker: true } });
 } else {
   http
     .createServer((req, res) => {
+      console.log(workerData);
       res.end("Hello, World\n");
     })
     .listen(3000);
