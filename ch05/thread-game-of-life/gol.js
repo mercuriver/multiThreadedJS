@@ -52,38 +52,41 @@ class Grid {
 const BLACK = 0xff000000;
 const WHITE = 0xffffffff;
 const SIZE = 800;
+const THREADS = 5; // SIZE의 약수
 
-const iterationCounter = document.getElementById("iteration");
-const gridCanvas = document.getElementById("gridCanvas");
+const imageaOffset = 2 * SIZE * SIZE;
+const syncOffset = imageaOffset + 4 * SIZE * SIZE;
 
-gridCanvas.height = SIZE;
-gridCanvas.width = SIZE;
+const isMainThread = !!self.window;
 
-const ctx = gridCanvas.getContext("2d");
-const data = ctx.createImageData(SIZE, SIZE);
-const buf = new Uint32Array(data.data.buffer);
+if (isMainThread) {
+  const iterationCounter = document.getElementById("iteration");
+  const gridCanvas = document.getElementById("gridCanvas");
+  gridCanvas.height = SIZE;
+  gridCanvas.width = SIZE;
+  const ctx = gridCanvas.getContext("2d");
 
-function paint(cell, x, y) {
-  buf[SIZE * x + y] = cell ? BLACK : WHITE;
-}
+  const sharedMemory = new SharedArrayBuffer(
+    syncOffset + // data + imageData
+      THREADS * 4 // 각 스레드에 4바이트 씩 부여된 동기화 데이터 처리부
+  );
+  const imageData = new ImageData(SIZE, SIZE);
+  const cells = new Uint8Array(sharedMemory, 0, imageaOffset);
+  const sharedImageBuf = new Uint32Array(sharedMemory, imageaOffset);
+  const sharedImageBuf8 = new Uint8ClampedArray(
+    sharedMemory,
+    imageaOffset,
+    4 * SIZE * SIZE
+  );
 
-const grid = new Grid(SIZE, new ArrayBuffer(2 * SIZE * SIZE), paint);
-for (let x = 0; x < SIZE; x++) {
-  for (let y = 0; y < SIZE; y++) {
-    const cell = Math.random() < 0.5 ? 0 : 1;
-    grid.cells[SIZE * x + y] = cell;
-    paint(cell, x, y);
+  for (let x = 0; x < SIZE; x++) {
+    for (let y = 0; y < SIZE; y++) {
+      const cell = Math.random() < 0.5 ? 0 : 1;
+      cells[SIZE * x + y] = cell;
+      sharedImageBuf[SIZE * x + y] = cell ? BLACK : WHITE;
+    }
   }
+
+  imageData.data.set(sharedImageBuf8);
+  ctx.putImageData(imageData, 0, 0);
 }
-
-ctx.putImageData(data, 0, 0);
-
-let iteration = 0;
-function iterate(...args) {
-  grid.iterate(...args);
-  ctx.putImageData(data, 0, 0);
-  iterationCounter.innerHTML = ++iteration;
-  window.requestAnimationFrame(() => iterate(...args));
-}
-
-iterate(0, 0, SIZE, SIZE);
