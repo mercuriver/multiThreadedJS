@@ -38,13 +38,17 @@ module.exports = class RpcWorkerPool {
     }
   }
 
-  // onMessageHandler(msg) {
-  //   const { result, error, id } = msg.data;
-  //   const { resolve, reject } = this.in_flight_commands.get(id);
-  //   this.in_flight_commands.delete(id);
-  //   if (error) reject(error);
-  //   else resolve(result);
-  // }
+  onMessageHandler(msg, worker_id) {
+    const worker = this.workers[worker_id];
+    const { result, error, id } = msg;
+    const { resolve, reject } = worker.in_flight_commands.get(id);
+    worker.in_flight_commands.delete(id);
+    if (error) {
+      reject(error);
+    } else {
+      resolve(result);
+    }
+  }
 
   // exec(method, ...args) {
   //   this.next_command_id += 1;
