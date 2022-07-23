@@ -118,6 +118,16 @@ if (isMainThread) {
   let cells;
   let nextCells;
 
+  function runWorker({ range, i }) {
+    const grid = new Grid(SIZE, sharedMemory);
+    while (true) {
+      Atomics.wait(sync, i, 0);
+      grid.iterate(...range);
+      Atomics.store(sync, i, 0);
+      Atomics.notify(sync, i);
+    }
+  }
+
   function initListener(msg) {
     const opts = msg.data;
     sharedMemory = opts.sharedMemory;
@@ -125,7 +135,7 @@ if (isMainThread) {
 
     self.removeEventListener("message", initListener);
 
-    if (opts) {
+    if (opts.coord) {
       self.addEventListener("message", runCoord);
       cells = new Uint8Array(sharedMemory);
       nextCells = new Uint8Array(sharedMemory, SIZE * SIZE);
