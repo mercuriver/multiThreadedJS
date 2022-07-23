@@ -54,8 +54,8 @@ const WHITE = 0xffffffff;
 const SIZE = 800;
 const THREADS = 5; // SIZE의 약수
 
-const imageaOffset = 2 * SIZE * SIZE;
-const syncOffset = imageaOffset + 4 * SIZE * SIZE;
+const imageOffset = 2 * SIZE * SIZE;
+const syncOffset = imageOffset + 4 * SIZE * SIZE;
 
 const isMainThread = !!self.window;
 
@@ -71,11 +71,11 @@ if (isMainThread) {
       THREADS * 4 // 각 스레드에 4바이트 씩 부여된 동기화 데이터 처리부
   );
   const imageData = new ImageData(SIZE, SIZE);
-  const cells = new Uint8Array(sharedMemory, 0, imageaOffset);
-  const sharedImageBuf = new Uint32Array(sharedMemory, imageaOffset);
+  const cells = new Uint8Array(sharedMemory, 0, imageOffset);
+  const sharedImageBuf = new Uint32Array(sharedMemory, imageOffset);
   const sharedImageBuf8 = new Uint8ClampedArray(
     sharedMemory,
-    imageaOffset,
+    imageOffset,
     4 * SIZE * SIZE
   );
 
@@ -109,7 +109,7 @@ if (isMainThread) {
     imageData.data.set(sharedImageBuf8);
     ctx.putImageData(imageData, 0, 0);
     iterationCounter.innerHTML = ++iteration;
-    window.requestAnimationFrame(() => coordWorker.postMessage());
+    window.requestAnimationFrame(() => coordWorker.postMessage({}));
   });
 } else {
   let sharedMemory;
@@ -133,9 +133,11 @@ if (isMainThread) {
       Atomics.store(sync, i, 1);
       Atomics.notify(sync, i);
     }
+
     for (let i = 0; i < THREADS; i++) {
       Atomics.wait(sync, i, 1);
     }
+
     const oldCells = cells;
     cells = nextCells;
     nextCells = oldCells;
@@ -159,7 +161,7 @@ if (isMainThread) {
       self.addEventListener("message", runCoord);
       cells = new Uint8Array(sharedMemory);
       nextCells = new Uint8Array(sharedMemory, SIZE * SIZE);
-      sharedImageBuf = new Uint32Array(sharedMemory, imageaOffset);
+      sharedImageBuf = new Uint32Array(sharedMemory, imageOffset);
       runCoord();
     } else {
       runWorker(opts);
