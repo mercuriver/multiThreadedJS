@@ -11,5 +11,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(1337, (err, addr) => {
   if (err) throw err;
-  console.log("http://clocalhost:1337");
+  console.log("http://localhost:1337");
 });
