@@ -111,4 +111,30 @@ if (isMainThread) {
     iterationCounter.innerHTML = ++iteration;
     window.requestAnimationFrame(() => coordWorker.postMessage());
   });
+} else {
+  let sharedMemory;
+  let sync;
+  let sharedImageBuf;
+  let cells;
+  let nextCells;
+
+  function initListener(msg) {
+    const opts = msg.data;
+    sharedMemory = opts.sharedMemory;
+    sync = new Int32Array(sharedMemory, syncOffset);
+
+    self.removeEventListener("message", initListener);
+
+    if (opts) {
+      self.addEventListener("message", runCoord);
+      cells = new Uint8Array(sharedMemory);
+      nextCells = new Uint8Array(sharedMemory, SIZE * SIZE);
+      sharedImageBuf = new Uint32Array(sharedMemory, imageaOffset);
+      runCoord();
+    } else {
+      runWorker(opts);
+    }
+  }
+
+  self.addEventListener("message", initListener);
 }
