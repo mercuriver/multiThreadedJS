@@ -17,3 +17,9 @@ server.listen(1337, (err) => {
   if (err) throw err;
   console.log("http://localhost:1337/");
 });
+
+/**
+ * 실행 커멘드
+ * exec: THREADS=3 STRATEGY=random node main.js
+ * test: npx autocannon -c 20 -a 200 http://localhost:1337
+ */
