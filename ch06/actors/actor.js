@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const net = require("net");
-const RpcWorkerPool = require("./rpc-worker");
+const RpcWorkerPool = require("./rpc-worker.js");
 
 const [, , host] = process.argv;
 const [hostname, port] = host.split(":");
