@@ -37,3 +37,24 @@ net
   .listen(actor_port, actor_hostname, () => {
     console.log(`actor: tcp://${actor_hostname}:${actor_port}`);
   });
+
+function randomActor() {
+  const pool = Array.from(actors);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+http
+  .createServer(async (req, res) => {
+    message_id++;
+    if (actors.size === 0) return res.end("Error: Empty actor pool");
+    const actor = randomActor();
+    messages.set(message_id, res);
+    actor({
+      id: message_id,
+      method: "square_sum",
+      args: [Number(req.url.substr(1))],
+    });
+  })
+  .listen(web_host, web_hostname, () => {
+    console.log(`web:   http://${web_hostname}:${web_port}`);
+  });
