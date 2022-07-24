@@ -50,16 +50,42 @@ module.exports = class RpcWorkerPool {
     }
   }
 
-  // exec(method, ...args) {
-  //   this.next_command_id += 1;
-  //   const id = this.next_command_id;
-  //   let resolve, reject;
-  //   const promise = new Promise((res, rej) => {
-  //     resolve = res;
-  //     reject = rej;
-  //   });
-  //   this.in_flight_commands.set(id, { resolve, reject });
-  //   this.worker.postMessage({ method, params: args, id });
-  //   return promise;
-  // }
+  exec(method, ...args) {
+    const id = ++this.next_command_id;
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    const worker = this.getWorker();
+    worker.in_flight_commands.set(id, { resolve, reject });
+    worker.worker.postMessage({ method, params: args, id });
+    return promise;
+  }
+
+  getWorker() {
+    let id;
+
+    if (this.strategy === STRATEGY.RANDOM) {
+      id = Math.floor(Math.random() * this.size);
+    } else if (this.strategy === STRATEGY.ROUND_ROBIN) {
+      this.rr_index++;
+      if (this.rr_index >= this.size) {
+        this.rr_index = 0;
+      }
+      id = this.rr_index;
+    } else if (this.strategy === STRATEGY.LEAST_BUSY) {
+      let min = Infinity;
+      for (let i = 0; i < this.size; i++) {
+        let worker = this.workers[i];
+        if (worker.in_flight_commands.size < min) {
+          min = worker.in_flight_commands.size;
+          id = i;
+        }
+      }
+    }
+
+    console.log("Selected Worker:", id);
+    return this.workers[id];
+  }
 };
