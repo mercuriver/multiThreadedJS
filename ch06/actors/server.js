@@ -58,3 +58,26 @@ http
   .listen(web_port, web_hostname, () => {
     console.log(`web:   http://${web_hostname}:${web_port}`);
   });
+
+/**
+ * 실행 명령어
+ * 1: node server.js 127.0.0.1:8000 127.0.0.1:9000
+ * 2: node actor.js 127.0.0.1:9000
+ *  하단 코드 추가로 인해 actor를 별도로 띄우지 않아도 됨
+ * 3: curl http://localhost:8000/9999
+ */
+
+const RpcWorkerPool = require("./rpc-worker.js");
+const worker = new RpcWorkerPool("./worker.js", 4, "leastBusy");
+
+actors.add(async (data) => {
+  const value = await worker.exec(data.method, ...data.args);
+  messages.get(data.id).end(
+    JSON.stringify({
+      id: data.id,
+      value,
+      pid: "server",
+    }) + "\0"
+  );
+  messages.delete(data.id);
+});
