@@ -3,7 +3,7 @@
 const net = require("net"); // TCP Server
 const http = require("http"); // HTTP Server
 
-const [_, __, web_host, actor_host] = process.argv;
+const [, , web_host, actor_host] = process.argv;
 const [web_hostname, web_port] = web_host.split(":");
 const [actor_hostname, actor_port] = actor_host.split(":");
 
