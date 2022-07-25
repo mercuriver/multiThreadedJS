@@ -18,5 +18,9 @@
   "homepage": "https://github.com/mercuriver/multiThreadedJS#readme",
   "dependencies": {
     "piscina": "^3.2.0"
+  },
+  "devDependencies": {
+    "@assemblyscript/loader": "^0.10.1",
+    "assemblyscript": "^0.20.16"
   }
 }
