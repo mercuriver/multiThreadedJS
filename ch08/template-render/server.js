@@ -18,3 +18,11 @@ server.listen(3000, (err, address) => {
   if (err) throw err;
   console.log(`listening on: ${address}`);
 });
+
+const timer = process.hrtime.bigint;
+setInterval(() => {
+  const start = time();
+  setImmediate(() => {
+    console.log(`delay: ${(timer() - start).toLocaleString()}ns`);
+  });
+}, 1000);
