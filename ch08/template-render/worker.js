@@ -3,7 +3,7 @@ const template = require("./template.js");
 
 function asyncOnMessageWrap(fn) {
   return async function (msg) {
-    parentPort.portMessage(await fn(msg));
+    parentPort.postMessage(await fn(msg));
   };
 }
 

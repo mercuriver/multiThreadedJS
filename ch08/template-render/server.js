@@ -21,8 +21,15 @@ server.listen(3000, (err, address) => {
 
 const timer = process.hrtime.bigint;
 setInterval(() => {
-  const start = time();
+  const start = timer();
   setImmediate(() => {
     console.log(`delay: ${(timer() - start).toLocaleString()}ns`);
   });
 }, 1000);
+
+/**
+ * 실행 명령어
+ * 1: node server.js
+ * 2: npx autocannon -d 60 http://localhost:3000/main
+ * 3: npx autocannon -d 60 http://localhost:3000/offload
+ */
